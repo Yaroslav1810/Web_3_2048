@@ -1,8 +1,13 @@
 const gridElement = document.getElementById("grid");
 
+const newGameButton = document.getElementById("restart-button");
+const scoreValue = document.getElementById("score");
+
+let score = 0;
+
 let board = [
-    [0, 2, 2, 0],
-    [0, 2, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
     [0, 0, 0, 0],
     [0, 0, 0, 0]
 ];
@@ -31,6 +36,7 @@ function add(line, direction) {
     for (let index = 0; index < numbers.length - 1; index++) {
         if (numbers[index] == numbers[index + 1]) {
             numbers[index] = numbers[index] + numbers[index + 1];
+            score += numbers[index];
             numbers.splice(index + 1, 1);
 
             index = -1;
@@ -92,10 +98,15 @@ function renderBoard() {
             Index++;
         }
     }
+
+    scoreValue.textContent = score;
+
+    localStorage.setItem("board", JSON.stringify(board));
+    localStorage.setItem("score", JSON.stringify(score));
 }
 
 function addRandomTile() {
-    const cords = [];
+    let cords = [];
 
     for (let row = 0; row < 4; row++) {
         for (let column = 0; column < 4; column++) {
@@ -112,7 +123,7 @@ function addRandomTile() {
     }
 
     for (let i = 0; i < new_tiles; i++) {
-        const cord = Math.floor(Math.random() * cords.length);
+        let cord = Math.floor(Math.random() * cords.length);
 
         board[cords[cord][0]][cords[cord][1]] = (Math.floor(Math.random() * 2) + 1) * 2;
 
@@ -144,6 +155,32 @@ function isGameOver() {
     return true;
 }
 
+function newBoard () {
+
+    let cords = [];
+
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[i].length; j++) {
+            board[i][j] = 0;
+            cords.push([i, j]);
+        }
+    }
+
+    let new_tiles = Math.floor(Math.random() * 3) + 1;
+
+    for (let i = 0; i < new_tiles; i++) {
+        let cord = Math.floor(Math.random() * cords.length);
+
+        board[cords[cord][0]][cords[cord][1]] = (Math.floor(Math.random() * 2) + 1) * 2;
+
+        cords.splice(cord, 1);
+    }
+
+    score = 0;
+    renderBoard();
+
+}
+
 document.addEventListener("keydown", function (event) {
     const previousBoard = JSON.stringify(board); // старая доска
     switch (event.key) {
@@ -170,8 +207,26 @@ document.addEventListener("keydown", function (event) {
     renderBoard();
 
     if (isGameOver()) {
-        // new board и тд
+        newBoard();
+        // сохранить счет и таблица рекордов и тд.
+        score = 0; // пока что так
     }
 });
+
+newGameButton.addEventListener("click", newBoard);
+
+if (localStorage.getItem("board") != null) {
+    board = JSON.parse(localStorage.getItem("board"));
+}
+else {
+    newBoard();
+}
+
+if (localStorage.getItem("score") != null) {
+    score = JSON.parse(localStorage.getItem("score"));
+}
+else {
+    score = 0;
+}
 
 renderBoard();

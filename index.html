@@ -27,21 +27,44 @@
                 <div id="grid" class="grid"></div>
                 <div id="tiles" class="tiles"></div>
             </div>
+            <div id="game-over" hidden>
+                <h2 id="game-over-message">Игра окончена</h2>
+
+                <form id="save-result-form">
+                    <label for="player-name">Ваше имя</label>
+                    <input
+                        id="player-name"
+                        name="player-name"
+                        type="text"
+                        maxlength="30"
+                        required
+                    >
+
+                    <button type="submit">Сохранить результат</button>
+                </form>
+
+                <button id="game-over-close-button" type="button">
+                    Закрыть
+                </button>
+            </div>
         </div>
 
+        <div class="table-div">
+            <h2>Лучшие результаты</h2>
+            <table>
+                <thead id="leaderboard-head">
+                    <tr>
+                        <th>Имя</th>
+                        <th>Очки</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
 
-        <table>
-            <thead id="leaderboard-head">
-                <tr>
-                    <th>Имя</th>
-                    <th>Очки</th>
-                    <th>Дата</th>
-                </tr>
-            </thead>
+                <tbody id="leaderboard-body">
+                </tbody>
+            </table>
+        </div>
 
-            <tbody id="leaderboard-body">
-            </tbody>
-        </table>
 
     </main>
     <script src="js/script.js"></script>

@@ -3,10 +3,16 @@ const gridElement = document.getElementById("grid");
 const newGameButton = document.getElementById("restart-button");
 const scoreValue = document.getElementById("score");
 const undoButton = document.getElementById("undo-button");
+const leaderboardBody = document.getElementById("leaderboard-body");
+const saveResultForm = document.getElementById("save-result-form");
 
 let previousBoard = localStorage.getItem("prevBoard");
 
+let records = [];
 
+if (localStorage.getItem("records") != null) {
+    records = JSON.parse(localStorage.getItem("records"));
+}
 
 let score = 0;
 
@@ -167,12 +173,14 @@ function isGameOver() {
 }
 
 function newBoard () {
+    score = 0;
 
     previousBoard = null;
     previousScore = 0;
 
     localStorage.removeItem("prevBoard");
     localStorage.removeItem("prevScore");
+    localStorage.removeItem("resultSaved");
     undoButton.disabled = true;
 
     let cords = [];
@@ -196,9 +204,59 @@ function newBoard () {
 
     renderBoard();
 
+    saveResultForm.reset();
+    saveResultForm.hidden = false;
+
+    document.getElementById("game-over").hidden = true;
+    document.getElementById("game-over-message").textContent = "Игра окончена";
+
+}
+
+function endGame() {
+    localStorage.removeItem("prevBoard");
+    localStorage.removeItem("prevScore");
+
+    previousBoard = null;
+    previousScore = 0;
+
+    undoButton.disabled = true;
+
+    document.getElementById("game-over").hidden = false;
+
+    if (localStorage.getItem("resultSaved") == "true") {
+        saveResultForm.hidden = true;
+        document.getElementById("game-over-message").textContent = "Результат сохранен";
+    }
+}
+
+function showRecords() {
+    leaderboardBody.replaceChildren();
+
+    records.sort((a, b) => b.score - a.score);
+
+    for (let i = 0; i < records.length && i < 10; i++) {
+        let row = document.createElement("tr");
+
+        let name = document.createElement("td");
+        let score = document.createElement("td");
+        let date = document.createElement("td");
+
+        name.textContent = records[i].name;
+        score.textContent = records[i].score;
+        date.textContent = records[i].date;
+
+        row.append(name, score, date);
+        leaderboardBody.append(row);
+    }
+
+    records = records.slice(0, 10);
 }
 
 document.addEventListener("keydown", function (event) {
+    if (isGameOver()) {
+        return;
+    }
+
     let oldBoard = JSON.stringify(board);
     let oldScore = score;
 
@@ -234,14 +292,7 @@ document.addEventListener("keydown", function (event) {
     renderBoard();
 
     if (isGameOver()) {
-        previousBoard = null;
-        localStorage.removeItem("prevBoard");
-        localStorage.removeItem("prevScore");
-        undoButton.disabled = true;
-
-        newBoard();
-        // сохранить счет и таблица рекордов и тд.
-        score = 0; // пока что так
+        endGame();
     }
 
 });
@@ -265,6 +316,38 @@ undoButton.addEventListener("click", function (event) {
     }
 });
 
+saveResultForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    if (localStorage.getItem("resultSaved") == "true") {
+        return;
+    }
+
+    const name = document.getElementById("player-name").value.trim();
+
+    if (name == "") {
+        return;
+    }
+
+    records.push({
+        name: name,
+        score: score,
+        date: new Date().toLocaleDateString("ru-RU") // формат для RU
+    });
+
+    localStorage.setItem("records", JSON.stringify(records));
+    localStorage.setItem("resultSaved", "true");
+
+    saveResultForm.hidden = true;
+    document.getElementById("game-over-message").textContent = "Результат сохранен";
+
+    showRecords();
+});
+
+document.getElementById("game-over-close-button").addEventListener("click", function () {
+    document.getElementById("game-over").hidden = true;
+});
+
 if (localStorage.getItem("board") != null) {
     board = JSON.parse(localStorage.getItem("board"));
 }
@@ -280,3 +363,9 @@ else {
 undoButton.disabled = previousBoard == null || isGameOver();
 
 renderBoard();
+
+showRecords();
+
+if (isGameOver()) {
+    endGame();
+}

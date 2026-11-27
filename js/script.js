@@ -2,8 +2,19 @@ const gridElement = document.getElementById("grid");
 
 const newGameButton = document.getElementById("restart-button");
 const scoreValue = document.getElementById("score");
+const undoButton = document.getElementById("undo-button");
+
+let previousBoard = localStorage.getItem("prevBoard");
+
+
 
 let score = 0;
+
+let previousScore = 0;
+
+if (localStorage.getItem("prevScore") != null) {
+    previousScore = JSON.parse(localStorage.getItem("prevScore"));
+}
 
 let board = [
     [0, 0, 0, 0],
@@ -157,6 +168,13 @@ function isGameOver() {
 
 function newBoard () {
 
+    previousBoard = null;
+    previousScore = 0;
+
+    localStorage.removeItem("prevBoard");
+    localStorage.removeItem("prevScore");
+    undoButton.disabled = true;
+
     let cords = [];
 
     for (let i = 0; i < board.length; i++) {
@@ -176,13 +194,15 @@ function newBoard () {
         cords.splice(cord, 1);
     }
 
-    score = 0;
     renderBoard();
 
 }
 
 document.addEventListener("keydown", function (event) {
-    const previousBoard = JSON.stringify(board); // старая доска
+    let oldBoard = JSON.stringify(board);
+    let oldScore = score;
+
+
     switch (event.key) {
         case "ArrowLeft":
         case "ArrowRight":
@@ -200,27 +220,55 @@ document.addEventListener("keydown", function (event) {
             return;
     }
 
-    if (JSON.stringify(board) !== previousBoard) {
+    if (JSON.stringify(board) != oldBoard) {
+        previousBoard = oldBoard;
+        previousScore = oldScore;
+
+        localStorage.setItem("prevBoard", previousBoard);
+        localStorage.setItem("prevScore", JSON.stringify(previousScore));
+
         addRandomTile();
+        undoButton.disabled = false;
     }
 
     renderBoard();
 
     if (isGameOver()) {
+        previousBoard = null;
+        localStorage.removeItem("prevBoard");
+        localStorage.removeItem("prevScore");
+        undoButton.disabled = true;
+
         newBoard();
         // сохранить счет и таблица рекордов и тд.
         score = 0; // пока что так
     }
+
 });
 
 newGameButton.addEventListener("click", newBoard);
 
+undoButton.addEventListener("click", function (event) {
+    if (previousBoard != null) {
+        board = JSON.parse(previousBoard);
+        score = previousScore;
+
+        previousBoard = null;
+        previousScore = 0;
+
+        localStorage.removeItem("prevBoard");
+        localStorage.removeItem("prevScore");
+
+        undoButton.disabled = true;
+
+        renderBoard();
+    }
+});
+
 if (localStorage.getItem("board") != null) {
     board = JSON.parse(localStorage.getItem("board"));
 }
-else {
-    newBoard();
-}
+
 
 if (localStorage.getItem("score") != null) {
     score = JSON.parse(localStorage.getItem("score"));
@@ -228,5 +276,7 @@ if (localStorage.getItem("score") != null) {
 else {
     score = 0;
 }
+
+undoButton.disabled = previousBoard == null || isGameOver();
 
 renderBoard();
